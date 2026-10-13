@@ -1,0 +1,116 @@
+import type { SubjectId } from "../lib/types";
+
+/**
+ * Conteúdos mais cobrados nos vestibulares brasileiros, com um peso de
+ * incidência aproximado (0–100) baseado no histórico de provas do ENEM e das
+ * principais universidades. Usado pelo planejador offline e como referência
+ * para a IA.
+ */
+export const SYLLABUS: Record<SubjectId, { title: string; incidence: number }[]> = {
+  biologia: [
+    { title: "Ecologia: cadeias alimentares, ciclos biogeoquímicos e impactos ambientais", incidence: 95 },
+    { title: "Fisiologia humana: sistemas digestório, circulatório e respiratório", incidence: 85 },
+    { title: "Genética: leis de Mendel e heredogramas", incidence: 80 },
+    { title: "Citologia: membrana, organelas e metabolismo energético", incidence: 75 },
+    { title: "Evolução e seleção natural", incidence: 65 },
+    { title: "Doenças: vírus, bactérias, protozoários e verminoses", incidence: 70 },
+    { title: "Biotecnologia e engenharia genética", incidence: 60 },
+    { title: "Bioquímica: carboidratos, lipídios, proteínas e enzimas", incidence: 55 },
+    { title: "Botânica: fotossíntese, fisiologia e grupos vegetais", incidence: 45 },
+    { title: "Zoologia: invertebrados e vertebrados", incidence: 40 },
+    { title: "Embriologia e histologia", incidence: 30 },
+  ],
+  quimica: [
+    { title: "Química orgânica: funções orgânicas e isomeria", incidence: 85 },
+    { title: "Estequiometria e cálculos químicos", incidence: 80 },
+    { title: "Soluções e concentração", incidence: 70 },
+    { title: "Eletroquímica: pilhas e eletrólise", incidence: 65 },
+    { title: "Química ambiental: poluição, chuva ácida e efeito estufa", incidence: 70 },
+    { title: "Equilíbrio químico e pH", incidence: 60 },
+    { title: "Termoquímica", incidence: 55 },
+    { title: "Reações orgânicas e polímeros", incidence: 50 },
+    { title: "Ligações químicas e polaridade", incidence: 50 },
+    { title: "Cinética química", incidence: 45 },
+    { title: "Radioatividade", incidence: 35 },
+  ],
+  fisica: [
+    { title: "Eletrodinâmica: circuitos, potência e consumo de energia", incidence: 90 },
+    { title: "Mecânica: cinemática e leis de Newton", incidence: 85 },
+    { title: "Energia, trabalho e conservação", incidence: 75 },
+    { title: "Ondulatória e acústica", incidence: 65 },
+    { title: "Termologia: calor, temperatura e termodinâmica", incidence: 60 },
+    { title: "Óptica geométrica", incidence: 50 },
+    { title: "Hidrostática", incidence: 45 },
+    { title: "Eletromagnetismo", incidence: 40 },
+    { title: "Gravitação e movimento circular", incidence: 30 },
+  ],
+  matematica: [
+    { title: "Porcentagem, razão e proporção", incidence: 95 },
+    { title: "Estatística: média, moda, mediana e gráficos", incidence: 90 },
+    { title: "Geometria plana: áreas e perímetros", incidence: 85 },
+    { title: "Funções do 1º e 2º grau", incidence: 75 },
+    { title: "Probabilidade e análise combinatória", incidence: 75 },
+    { title: "Geometria espacial: volumes", incidence: 70 },
+    { title: "Escalas, grandezas e unidades de medida", incidence: 70 },
+    { title: "Função exponencial e logaritmo", incidence: 50 },
+    { title: "Progressões aritmética e geométrica", incidence: 45 },
+    { title: "Trigonometria", incidence: 40 },
+    { title: "Geometria analítica", incidence: 35 },
+    { title: "Matrizes e sistemas lineares", incidence: 25 },
+  ],
+  historia: [
+    { title: "Brasil República: Era Vargas e Ditadura Militar", incidence: 85 },
+    { title: "Brasil Colônia: economia açucareira, mineração e escravidão", incidence: 80 },
+    { title: "Brasil Império: independência e Segundo Reinado", incidence: 65 },
+    { title: "Idade Contemporânea: Revoluções e Guerras Mundiais", incidence: 70 },
+    { title: "Guerra Fria e mundo pós-1945", incidence: 60 },
+    { title: "Antiguidade clássica: Grécia e Roma", incidence: 45 },
+    { title: "Idade Média e feudalismo", incidence: 40 },
+    { title: "Movimentos sociais e cidadania no Brasil", incidence: 60 },
+  ],
+  geografia: [
+    { title: "Questões ambientais e desenvolvimento sustentável", incidence: 85 },
+    { title: "Geografia agrária e urbanização brasileira", incidence: 80 },
+    { title: "Geopolítica e globalização", incidence: 75 },
+    { title: "Climatologia e domínios morfoclimáticos", incidence: 65 },
+    { title: "Cartografia: escalas, fusos e projeções", incidence: 55 },
+    { title: "Geologia, relevo e solos", incidence: 50 },
+    { title: "Hidrografia e recursos hídricos", incidence: 45 },
+    { title: "Demografia e migrações", incidence: 50 },
+  ],
+  portugues: [
+    { title: "Interpretação de texto e gêneros textuais", incidence: 95 },
+    { title: "Funções da linguagem e variação linguística", incidence: 80 },
+    { title: "Figuras de linguagem", incidence: 60 },
+    { title: "Coesão e coerência", incidence: 65 },
+    { title: "Gramática contextualizada: classes e sintaxe", incidence: 50 },
+  ],
+  literatura: [
+    { title: "Modernismo brasileiro", incidence: 80 },
+    { title: "Romantismo e Realismo", incidence: 60 },
+    { title: "Obras obrigatórias da universidade", incidence: 70 },
+    { title: "Literatura contemporânea", incidence: 45 },
+  ],
+  redacao: [
+    { title: "Estrutura da dissertação-argumentativa", incidence: 100 },
+    { title: "Repertório sociocultural e argumentação", incidence: 90 },
+    { title: "Proposta de intervenção (competência 5)", incidence: 85 },
+    { title: "Prática de redação com tema", incidence: 100 },
+  ],
+  filosofia: [
+    { title: "Ética e filosofia política", incidence: 70 },
+    { title: "Filosofia antiga: Sócrates, Platão e Aristóteles", incidence: 60 },
+    { title: "Filosofia moderna: racionalismo, empirismo e Iluminismo", incidence: 55 },
+    { title: "Filosofia contemporânea", incidence: 40 },
+  ],
+  sociologia: [
+    { title: "Clássicos: Durkheim, Weber e Marx", incidence: 65 },
+    { title: "Cultura, identidade e indústria cultural", incidence: 60 },
+    { title: "Trabalho, desigualdade e movimentos sociais", incidence: 65 },
+    { title: "Cidadania, Estado e democracia", incidence: 55 },
+  ],
+  ingles: [
+    { title: "Interpretação de textos em inglês", incidence: 90 },
+    { title: "Vocabulário, cognatos e falsos cognatos", incidence: 60 },
+  ],
+};

@@ -1,0 +1,9 @@
+{
+  "name": "EstudeMais",
+  "short_name": "EstudeMais",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ec",
+  "theme_color": "#f4f1ec",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
