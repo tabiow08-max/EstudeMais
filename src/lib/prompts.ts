@@ -1,5 +1,6 @@
 import { SYLLABUS } from "../data/syllabus";
-import { SUBJECT_IDS } from "../data/subjects";
+import { SUBJECT_IDS, SUBJECTS } from "../data/subjects";
+import { requiredSubjects } from "./offlinePlanner";
 import type { PlanRequest, PlanResponse, Priority, ReviewRequest, ReviewResponse, SubjectId } from "./types";
 
 /* IA 1 — Planejadora */
@@ -9,7 +10,9 @@ export const PLANNER_SYSTEM = `Você é um coordenador pedagógico especialista 
 Sua tarefa: montar a lista de temas que um estudante deve estudar no tempo que tem, escolhendo o que dá mais retorno em pontos para o vestibular e o curso dele.
 
 Como decidir:
-- Considere a estrutura da prova escolhida (matérias cobradas, peso por área, se tem 2ª fase discursiva, redação, obras literárias obrigatórias) e as matérias com peso maior para o curso.
+- O plano precisa cobrir TODAS as matérias cobradas na prova (exatas, natureza, humanas, linguagens e redação), mesmo as que pesam menos para o curso. O curso muda só quantas horas e qual prioridade cada matéria recebe; nunca tira uma matéria do plano.
+- Inclua pelo menos 2 temas de cada matéria da prova (1 só se o tempo for muito curto). As matérias com peso maior para o curso recebem mais temas e mais horas.
+- Considere a estrutura da prova escolhida (matérias cobradas, peso por área, se tem 2ª fase discursiva, redação, obras literárias obrigatórias).
 - "incidence" é sua estimativa de 0 a 100 de quão frequente o tema aparece nessa prova, com base no histórico.
 - "priority": alta = muito cobrado e/ou peso alto para o curso; media = cobrado com frequência; baixa = só se sobrar tempo.
 - "hours" é o tempo de aula/estudo para ver o tema bem (normalmente 2 a 6 h). A soma das horas deve caber em cerca de 85% do total disponível — o restante fica para revisão. Se o tempo for curto, corte temas de baixa incidência em vez de espremer horas.
@@ -26,7 +29,8 @@ export function plannerUserMessage(req: PlanRequest): string {
     `Vestibular: ${req.goal.vestibular}\n` +
     `Curso: ${req.goal.curso}\n` +
     `Período: ${req.goal.startDate} até ${req.goal.endDate} (${req.weeks} semanas)\n` +
-    `Horas de estudo disponíveis no período: ${req.totalHours} h\n\n` +
+    `Horas de estudo disponíveis no período: ${req.totalHours} h\n` +
+    `Matérias da prova (todas devem aparecer no plano): ${requiredSubjects(req.goal.vestibular).map((s) => SUBJECTS[s].name).join(", ")}\n\n` +
     `Lista de referência de temas (pode usar, ajustar ou acrescentar outros):\n${reference}`
   );
 }

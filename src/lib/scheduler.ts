@@ -79,7 +79,15 @@ export function buildSchedule(
     queues.get(t.subject)!.push({ topic: t, remaining: hours });
   }
 
-  const essayEvery = essayBudget > 0 ? Math.max(1, Math.floor(slots.length / essayBudget)) : Infinity;
+  // fatia de cada matéria no total de aulas de conteúdo
+  const units = [...queues.values()].flat().reduce((s, x) => s + x.remaining, 0);
+  const share = new Map<SubjectId, number>(
+    [...queues].map(([s, q]) => [s, q.reduce((a, x) => a + x.remaining, 0) / Math.max(1, units)]),
+  );
+  const given = new Map<SubjectId, number>();
+  let contentSlot = 0;
+
+  const essayEvery =essayBudget > 0 ? Math.max(1, Math.floor(slots.length / essayBudget)) : Infinity;
   const blocks: StudyBlock[] = [];
   let last: SubjectId | undefined;
   let essayIdx = 0;
@@ -97,15 +105,16 @@ export function buildSchedule(
       return;
     }
 
-    // escolhe a matéria com mais carga pendente ponderada pela prioridade, evitando repetir a anterior
+    // escolhe a matéria mais "atrasada" em relação à sua fatia do tempo total,
+    // para que todas as matérias apareçam ao longo de todas as semanas
+    contentSlot += 1;
     let best: SubjectId | undefined;
-    let bestScore = -1;
+    let bestScore = -Infinity;
     for (const [subject, q] of queues) {
       if (!q.length) continue;
-      const head = q[0];
-      const pending = q.reduce((s, x) => s + x.remaining, 0);
-      let score = pending * PRIORITY_WEIGHT[head.topic.priority] + head.topic.incidence / 50;
-      if (subject === last) score *= 0.25;
+      const expected = share.get(subject)! * contentSlot;
+      let score = expected - (given.get(subject) ?? 0) + PRIORITY_WEIGHT[q[0].topic.priority] * 0.01;
+      if (subject === last) score -= 1;
       if (score > bestScore) {
         bestScore = score;
         best = subject;
@@ -116,6 +125,7 @@ export function buildSchedule(
       const q = queues.get(best)!;
       const head = q[0];
       blocks.push({ ...base, subject: best, topicId: head.topic.id, title: head.topic.title, kind: "aula" });
+      given.set(best, (given.get(best) ?? 0) + 1);
       head.remaining -= 1;
       if (head.remaining <= 0) q.shift();
       last = best;

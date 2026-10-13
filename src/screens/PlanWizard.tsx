@@ -3,11 +3,11 @@ import { ArrowLeft, Sparkles, WifiOff } from "lucide-react";
 import { CURSOS, VESTIBULARES } from "../data/subjects";
 import { addMonths, daysBetween, today, WEEKDAYS_ABBR } from "../lib/dates";
 import { AIUnavailableError, generatePlan } from "../lib/api";
-import { offlinePlan } from "../lib/offlinePlanner";
+import { fillMissingSubjects, offlinePlan } from "../lib/offlinePlanner";
 import { buildSchedule, totalHours } from "../lib/scheduler";
 import { uid, useStore } from "../lib/store";
 import type { DayWindow, Goal, Plan } from "../lib/types";
-import { Loading, PriorityBadge, SubjectIcon } from "../components/ui";
+import { Loading, PriorityBadge, SubjectIcon, SubjectTag } from "../components/ui";
 
 const DEFAULT_WINDOWS: DayWindow[] = [1, 2, 3, 4, 5].map((day) => ({ day, start: "19:00", end: "22:00" }));
 const PERIODS = [
@@ -52,7 +52,7 @@ export function PlanWizard({ onDone, onCancel }: { onDone: () => void; onCancel?
         createdAt: new Date().toISOString(),
         source: "ia",
         summary: res.summary,
-        topics: res.topics.map((t) => ({ ...t, id: uid() })),
+        topics: fillMissingSubjects(goal, res.topics).map((t) => ({ ...t, id: uid() })),
       });
     } catch (e) {
       const res = offlinePlan(goal, hours);
@@ -241,8 +241,13 @@ export function PlanWizard({ onDone, onCancel }: { onDone: () => void; onCancel?
                     </span>
                   </div>
                 )}
+                <div className="chips" style={{ flexWrap: "wrap" }}>
+                  {[...new Set(plan.topics.map((t) => t.subject))].map((s) => (
+                    <SubjectTag key={s} subject={s} />
+                  ))}
+                </div>
                 <div className="row between">
-                  <h3>{plan.topics.length} temas</h3>
+                  <h3>{new Set(plan.topics.map((t) => t.subject)).size} matérias · {plan.topics.length} temas</h3>
                   <span className="muted">{plan.topics.reduce((s, t) => s + t.hours, 0)} h de aula + revisão</span>
                 </div>
                 <div className="list">
