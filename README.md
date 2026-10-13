@@ -14,6 +14,16 @@ Também tem:
 
 O visual foi inspirado no layout de referência (tons creme e títulos com serifa). É um app web *mobile-first*: no celular, dá para usar "Adicionar à tela inicial" e ele abre como aplicativo.
 
+## Instalar no tablet ou celular (app)
+
+O app é publicado automaticamente em **https://tabiow08-max.github.io/EstudeMais/** (GitHub Pages, branch `gh-pages`).
+
+1. Abra esse endereço no Chrome do tablet.
+2. Toque em **⋮ → Instalar app** (ou **Adicionar à tela inicial**). Aparece o ícone do EstudeMais, que abre em tela cheia e funciona até sem internet.
+3. No primeiro uso, cole sua chave da API da Anthropic (crie em <https://console.anthropic.com/settings/keys>). Ela fica guardada só no aparelho. Cada plano ou revisão gerada gasta alguns centavos dos seus créditos da API.
+
+Os dados ficam guardados no próprio aparelho. Em **Perfil → Configurações** dá para salvar e restaurar uma cópia de segurança.
+
 ## Versão publicada no Claude
 
 O app também é publicado como uma página no claude.ai. Lá, as IAs usam a própria conta do Claude de quem abre a página (sem chave de API), e os dados ficam salvos na conta, então aparecem em qualquer aparelho. Para gerar a página de novo depois de mudar o código:

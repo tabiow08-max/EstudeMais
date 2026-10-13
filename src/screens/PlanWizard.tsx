@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Sparkles, WifiOff } from "lucide-react";
 import { CURSOS, VESTIBULARES } from "../data/subjects";
 import { addMonths, daysBetween, today, WEEKDAYS_ABBR } from "../lib/dates";
-import { AIUnavailableError, generatePlan } from "../lib/api";
+import { AIUnavailableError, aiMode, generatePlan } from "../lib/api";
+import { ApiKeyForm } from "../components/ApiKeyForm";
 import { fillMissingSubjects, offlinePlan } from "../lib/offlinePlanner";
 import { buildSchedule, totalHours } from "../lib/scheduler";
 import { uid, useStore } from "../lib/store";
@@ -77,7 +78,7 @@ export function PlanWizard({ onDone, onCancel }: { onDone: () => void; onCancel?
     onDone();
   }
 
-  const back = () => (step > (needsName ? 0 : 1) ? setStep(step - 1) : onCancel?.());
+  const back = () => (step === 5 ? setStep(3) : step > (needsName ? 0 : 1) ? setStep(step - 1) : onCancel?.());
   const validWindows = windows.length > 0 && windows.every((w) => w.start < w.end);
 
   return (
@@ -217,8 +218,24 @@ export function PlanWizard({ onDone, onCancel }: { onDone: () => void; onCancel?
                 <p className="muted">por semana</p>
               </div>
             </div>
-            <button className="btn" disabled={!validWindows || hours < 1} onClick={generate}>
+            <button className="btn" disabled={!validWindows || hours < 1} onClick={() => (aiMode() === "nenhum" ? setStep(5) : generate())}>
               <Sparkles size={18} /> Gerar meu plano com IA
+            </button>
+          </>
+        )}
+
+        {step === 5 && (
+          <>
+            <div className="stack">
+              <h1>Ligue a IA</h1>
+              <p className="sub">
+                A IA escolhe os temas que mais caem na sua prova e cria flashcards e simuladinhos depois de cada aula. Para isso,
+                cole sua chave da API da Anthropic. Você só faz isso uma vez.
+              </p>
+            </div>
+            <ApiKeyForm onSaved={() => setTimeout(generate, 600)} />
+            <button className="btn secondary" onClick={generate}>
+              Continuar sem IA (modo offline)
             </button>
           </>
         )}

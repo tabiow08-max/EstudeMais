@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Layers, ListChecks, Sparkles } from "lucide-react";
 import { SUBJECT_IDS, SUBJECTS } from "../data/subjects";
-import { AIUnavailableError, generateReview } from "../lib/api";
+import { generateReview } from "../lib/api";
 import { today } from "../lib/dates";
 import { uid, useStore } from "../lib/store";
 import type { Flashcard, Quiz, StudyBlock, SubjectId } from "../lib/types";
@@ -47,11 +47,7 @@ export function StudiedSheet({ block, onClose, onOpenDeck, onOpenQuiz }: Props) 
       else markStudied();
       setResult({ cards: cards.length, quizId: quiz.id });
     } catch (e) {
-      setError(
-        e instanceof AIUnavailableError
-          ? e.message + " Para gerar flashcards e simuladinhos, a IA precisa estar ligada (veja Perfil → Configurações)."
-          : (e as Error).message,
-      );
+      setError((e as Error).message);
     } finally {
       setLoading(false);
     }

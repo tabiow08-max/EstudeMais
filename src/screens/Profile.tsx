@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, BookOpen, ChevronRight, ClipboardList, Heart, LogOut, Pencil, Settings, Wifi, WifiOff } from "lucide-react";
 import { SUBJECTS } from "../data/subjects";
-import { aiStatus, insideClaude } from "../lib/api";
+import { aiMode, aiStatus } from "../lib/api";
+import { ApiKeyForm } from "../components/ApiKeyForm";
 import { prettyDate } from "../lib/dates";
 import { useStore } from "../lib/store";
 import type { SubjectId } from "../lib/types";
@@ -120,10 +121,36 @@ function SubjectsSheet({ onClose }: { onClose: () => void }) {
 }
 
 function ConfigSheet({ onClose }: { onClose: () => void }) {
+  const { state, set } = useStore();
+  const mode = aiMode();
   const [ai, setAi] = useState<boolean | null>(null);
+  const [backupMsg, setBackupMsg] = useState<string | null>(null);
+
   useEffect(() => {
     aiStatus().then(setAi);
   }, []);
+
+  function exportBackup() {
+    const blob = new Blob([JSON.stringify(state)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `estudemais-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    setBackupMsg("Cópia salva na pasta de downloads.");
+  }
+
+  async function importBackup(file: File) {
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data || !Array.isArray(data.cards) || !Array.isArray(data.blocks)) throw new Error();
+      set(data);
+      setBackupMsg("Dados restaurados.");
+    } catch {
+      setBackupMsg("Esse arquivo não é uma cópia de segurança do EstudeMais.");
+    }
+  }
+
   return (
     <Sheet title="Configurações" onClose={onClose}>
       <div className="card row">
@@ -135,23 +162,48 @@ function ConfigSheet({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       </div>
-      {ai === false && insideClaude() && (
+
+      {mode === "claude" && ai === false && (
         <p className="notice">
           Quando o app pedir permissão para usar o Claude, toque em permitir. Se você recusou, recarregue a página
           para ver o pedido de novo.
         </p>
       )}
-      {ai === false && !insideClaude() && (
+
+      {mode !== "claude" && mode !== "servidor" && (
+        <ApiKeyForm onSaved={() => setAi(true)} onRemoved={() => setAi(false)} />
+      )}
+
+      {mode === "servidor" && ai === false && (
         <p className="notice">
           Para ligar a IA, crie um arquivo <code>.env</code> na pasta do projeto com <code>ANTHROPIC_API_KEY=sua-chave</code> e
           reinicie o servidor. Veja o README.
         </p>
       )}
-      <p className="muted">
-        {insideClaude()
-          ? "Seus dados ficam salvos na sua conta do Claude, só para você, e aparecem em qualquer aparelho."
-          : "Seus dados ficam salvos só neste aparelho (no navegador)."}
-      </p>
+
+      {mode === "claude" ? (
+        <p className="muted">Seus dados ficam salvos na sua conta do Claude, só para você, e aparecem em qualquer aparelho.</p>
+      ) : (
+        <div className="stack">
+          <h3>Cópia de segurança</h3>
+          <p className="muted">
+            Seus dados ficam guardados neste aparelho. Salve uma cópia de vez em quando para não perder nada se limpar o
+            navegador ou trocar de aparelho.
+          </p>
+          <div className="row">
+            <button className="btn secondary small" onClick={exportBackup}>Salvar cópia</button>
+            <label className="btn secondary small" htmlFor="restore">Restaurar cópia</label>
+            <input
+              id="restore"
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(e) => e.target.files?.[0] && importBackup(e.target.files[0])}
+            />
+          </div>
+          {backupMsg && <p className="notice">{backupMsg}</p>}
+        </div>
+      )}
     </Sheet>
   );
 }

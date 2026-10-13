@@ -4,19 +4,48 @@ import {
   REVIEW_FORMAT, TUTOR_SYSTEM, tutorUserMessage,
 } from "./prompts";
 
+/** true na versão publicada dentro do claude.ai (definido no build). */
+declare const __ARTIFACT__: boolean;
+
 export class AIUnavailableError extends Error {}
 
-/* ---------- Dentro do Claude (página publicada): IA via capacidade `sample` ---------- */
+/*
+ * O app pode rodar de três jeitos, e a IA segue o jeito:
+ *  1. dentro do claude.ai (página publicada): usa o Claude da conta de quem abriu;
+ *  2. instalado no aparelho: usa a chave da API salva em Configurações;
+ *  3. no computador com `npm run dev`: usa o servidor local (chave no .env).
+ */
+
+/* ---------- Chave da API guardada no aparelho ---------- */
+
+const KEY_STORAGE = "estudemais:apiKey";
+
+export function getApiKey(): string {
+  try {
+    return localStorage.getItem(KEY_STORAGE) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setApiKey(key: string) {
+  try {
+    if (key) localStorage.setItem(KEY_STORAGE, key);
+    else localStorage.removeItem(KEY_STORAGE);
+  } catch {
+    /* sem armazenamento: a chave vale só nesta sessão */
+  }
+}
+
+const isLocalServer = () => /^(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)$/.test(location.hostname);
+
+/* ---------- 1. Dentro do Claude: capacidade `sample` ---------- */
 
 type SampleJson = (input: string, opts?: { modelTier?: string; cache?: boolean }) => Promise<unknown>;
 type SampleFn = { json: SampleJson };
 
-interface ClaudeHost {
-  use(name: string): Promise<unknown>;
-}
-
-function host(): ClaudeHost | undefined {
-  return (window as unknown as { claude?: ClaudeHost }).claude;
+function host(): { use(name: string): Promise<unknown> } | undefined {
+  return (window as unknown as { claude?: { use(name: string): Promise<unknown> } }).claude;
 }
 
 export const insideClaude = () => typeof host()?.use === "function";
@@ -49,7 +78,14 @@ async function askClaude(prompt: string, modelTier: "default" | "complex"): Prom
   }
 }
 
-/* ---------- Rodando localmente: servidor próprio com ANTHROPIC_API_KEY ---------- */
+/* ---------- 2. Instalado no aparelho: chave da API ---------- */
+
+async function direct() {
+  if (__ARTIFACT__) return null;
+  return import("./directClient");
+}
+
+/* ---------- 3. Servidor local ---------- */
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   let res: Response;
@@ -66,26 +102,60 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return data as T;
 }
 
+const NO_KEY = "Para a IA funcionar, cole sua chave da API em Perfil → Configurações.";
+
 /* ---------- API usada pelas telas ---------- */
 
+export type AIMode = "claude" | "chave" | "servidor" | "nenhum";
+
+/** Como a IA funciona neste aparelho agora. */
+export function aiMode(): AIMode {
+  if (insideClaude()) return "claude";
+  if (getApiKey()) return "chave";
+  if (isLocalServer()) return "servidor";
+  return "nenhum";
+}
+
 export async function aiStatus(): Promise<boolean> {
-  if (insideClaude()) return !sampleDenied && (await getSample()) != null;
-  try {
-    const res = await fetch("/api/health");
-    return res.ok && Boolean((await res.json()).ai);
-  } catch {
-    return false;
+  switch (aiMode()) {
+    case "claude":
+      return !sampleDenied && (await getSample()) != null;
+    case "chave":
+      return true;
+    case "servidor":
+      try {
+        const res = await fetch("/api/health");
+        return res.ok && Boolean((await res.json()).ai);
+      } catch {
+        return false;
+      }
+    default:
+      return false;
   }
 }
 
 export async function generatePlan(req: PlanRequest): Promise<PlanResponse> {
-  if (!insideClaude()) return post<PlanResponse>("/api/plan", req);
-  const raw = await askClaude(`${PLANNER_SYSTEM}\n\n${plannerUserMessage(req)}\n\n${PLAN_FORMAT}`, "complex");
-  return cleanPlan(raw);
+  const mode = aiMode();
+  if (mode === "claude") {
+    return cleanPlan(await askClaude(`${PLANNER_SYSTEM}\n\n${plannerUserMessage(req)}\n\n${PLAN_FORMAT}`, "complex"));
+  }
+  if (mode === "chave") return (await direct())!.directPlan(getApiKey(), req);
+  if (mode === "servidor") return post<PlanResponse>("/api/plan", req);
+  throw new AIUnavailableError(NO_KEY);
 }
 
 export async function generateReview(req: ReviewRequest): Promise<ReviewResponse> {
-  if (!insideClaude()) return post<ReviewResponse>("/api/review", req);
-  const raw = await askClaude(`${TUTOR_SYSTEM}\n\n${tutorUserMessage(req)}\n\n${REVIEW_FORMAT}`, "default");
-  return cleanReview(raw);
+  const mode = aiMode();
+  if (mode === "claude") {
+    return cleanReview(await askClaude(`${TUTOR_SYSTEM}\n\n${tutorUserMessage(req)}\n\n${REVIEW_FORMAT}`, "default"));
+  }
+  if (mode === "chave") return (await direct())!.directReview(getApiKey(), req);
+  if (mode === "servidor") return post<ReviewResponse>("/api/review", req);
+  throw new AIUnavailableError(NO_KEY);
+}
+
+export async function testApiKey(key: string): Promise<void> {
+  const d = await direct();
+  if (!d) throw new Error("Indisponível nesta versão.");
+  await d.testKey(key);
 }

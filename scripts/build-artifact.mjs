@@ -15,6 +15,7 @@ await build({
   configFile: false,
   logLevel: "warn",
   plugins: [react({ jsxRuntime: "classic" })],
+  define: { __ARTIFACT__: "true" },
   build: {
     outDir: tmp,
     emptyOutDir: true,

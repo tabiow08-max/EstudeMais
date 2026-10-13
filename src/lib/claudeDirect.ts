@@ -1,9 +1,9 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { SYLLABUS } from "../src/data/syllabus.js";
-import { PLANNER_SYSTEM, plannerUserMessage, TUTOR_SYSTEM, tutorUserMessage } from "../src/lib/prompts.js";
-import type { PlanRequest, PlanResponse, ReviewRequest, ReviewResponse } from "../src/lib/types.js";
+import { SYLLABUS } from "../data/syllabus";
+import { PLANNER_SYSTEM, plannerUserMessage, TUTOR_SYSTEM, tutorUserMessage } from "./prompts";
+import type { PlanRequest, PlanResponse, ReviewRequest, ReviewResponse } from "./types";
 
 const MODEL = "claude-opus-5-5";
 

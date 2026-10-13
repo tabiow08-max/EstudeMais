@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { planWithAI, reviewWithAI } from "./ai.js";
+import { planWithAI, reviewWithAI } from "../src/lib/claudeDirect.js";
 
 const app = express();
 app.use(express.json({ limit: "200kb" }));
