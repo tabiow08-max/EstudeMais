@@ -49,7 +49,7 @@ export function StudiedSheet({ block, onClose, onOpenDeck, onOpenQuiz }: Props) 
     } catch (e) {
       setError(
         e instanceof AIUnavailableError
-          ? "A IA não está configurada. Adicione a ANTHROPIC_API_KEY no servidor (veja o README) para gerar flashcards e simulados."
+          ? e.message + " Para gerar flashcards e simuladinhos, a IA precisa estar ligada (veja Perfil → Configurações)."
           : (e as Error).message,
       );
     } finally {

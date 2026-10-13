@@ -14,7 +14,15 @@ Também tem:
 
 O visual foi inspirado no layout de referência (tons creme e títulos com serifa). É um app web *mobile-first*: no celular, dá para usar "Adicionar à tela inicial" e ele abre como aplicativo.
 
-## Como rodar
+## Versão publicada no Claude
+
+O app também é publicado como uma página no claude.ai. Lá, as IAs usam a própria conta do Claude de quem abre a página (sem chave de API), e os dados ficam salvos na conta, então aparecem em qualquer aparelho. Para gerar a página de novo depois de mudar o código:
+
+```bash
+npm run build:artifact    # gera dist-artifact/estudemais.html
+```
+
+## Como rodar no computador
 
 Pré-requisito: [Node.js](https://nodejs.org) 20 ou mais recente.
 

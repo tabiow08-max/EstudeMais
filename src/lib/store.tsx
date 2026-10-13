@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { AppState, Flashcard, Quiz, StudyBlock } from "./types";
 import { today } from "./dates";
+import { connectCloud, type CloudSync } from "./sync";
 
 const KEY = "estudemais:v1";
 
@@ -13,7 +14,7 @@ const INITIAL: AppState = {
   studyDays: [],
 };
 
-function load(): AppState {
+function loadLocal(): AppState {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return { ...INITIAL, ...JSON.parse(raw) };
@@ -25,6 +26,9 @@ function load(): AppState {
 
 interface Store {
   state: AppState;
+  /** false enquanto busca os dados salvos na conta. */
+  ready: boolean;
+  syncError: string | null;
   set: (patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void;
   toggleBlock: (id: string) => void;
   addBlock: (block: StudyBlock) => void;
@@ -38,7 +42,36 @@ interface Store {
 const Ctx = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(load);
+  const [state, setState] = useState<AppState>(loadLocal);
+  const [ready, setReady] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const cloud = useRef<CloudSync | null>(null);
+  const loadedFromCloud = useRef(false);
+
+  // conecta uma vez ao armazenamento da conta (quando roda dentro do Claude)
+  useEffect(() => {
+    let alive = true;
+    connectCloud(INITIAL, setSyncError)
+      .then((c) => {
+        if (!alive) return;
+        cloud.current = c;
+        if (c?.initial) {
+          loadedFromCloud.current = true;
+          setState(c.initial);
+        } else if (c) {
+          // primeira vez com a conta: envia o que já existe neste aparelho
+          setState((s) => {
+            c.save(s);
+            return s;
+          });
+        }
+      })
+      .catch(() => setSyncError("Não foi possível carregar seus dados da conta. Usando os dados deste aparelho."))
+      .finally(() => alive && setReady(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -46,18 +79,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignora — o app continua funcionando em memória */
     }
-  }, [state]);
+    if (ready && cloud.current) {
+      if (loadedFromCloud.current) loadedFromCloud.current = false; // não regrava o que acabou de chegar
+      else cloud.current.save(state);
+    }
+  }, [state, ready]);
 
   const set = useCallback<Store["set"]>((patch) => {
     setState((s) => ({ ...s, ...(typeof patch === "function" ? patch(s) : patch) }));
   }, []);
 
-  const withStudyDay = (s: AppState) =>
-    s.studyDays.includes(today()) ? s.studyDays : [...s.studyDays, today()];
+  const withStudyDay = (s: AppState) => (s.studyDays.includes(today()) ? s.studyDays : [...s.studyDays, today()]);
 
   const store = useMemo<Store>(
     () => ({
       state,
+      ready,
+      syncError,
       set,
       toggleBlock: (id) =>
         setState((s) => {
@@ -85,9 +123,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           studyDays: withStudyDay(s),
         })),
       markStudied: () => setState((s) => ({ ...s, studyDays: withStudyDay(s) })),
-      reset: () => setState({ ...INITIAL, profile: state.profile }),
+      reset: () => setState((s) => ({ ...INITIAL, profile: { ...INITIAL.profile, quote: s.profile.quote } })),
     }),
-    [state, set],
+    [state, ready, syncError, set],
   );
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;

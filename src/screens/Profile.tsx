@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, BookOpen, ChevronRight, ClipboardList, Heart, LogOut, Pencil, Settings, Wifi, WifiOff } from "lucide-react";
 import { SUBJECTS } from "../data/subjects";
-import { aiStatus } from "../lib/api";
+import { aiStatus, insideClaude } from "../lib/api";
 import { prettyDate } from "../lib/dates";
 import { useStore } from "../lib/store";
 import type { SubjectId } from "../lib/types";
@@ -9,9 +9,9 @@ import { PriorityBadge, Sheet, SubjectIcon } from "../components/ui";
 import type { Nav } from "../App";
 
 export function Profile({ nav }: { nav: Nav }) {
-  const { state, set, reset } = useStore();
+  const { state, reset } = useStore();
   const [editing, setEditing] = useState(false);
-  const [sheet, setSheet] = useState<"materias" | "config" | null>(null);
+  const [sheet, setSheet] = useState<"materias" | "config" | "reset" | null>(null);
   const [liked, setLiked] = useState(false);
 
   return (
@@ -39,18 +39,22 @@ export function Profile({ nav }: { nav: Nav }) {
         <MenuItem
           icon={<LogOut size={18} />}
           label="Apagar dados e recomeçar"
-          onClick={() => {
-            if (confirm("Isso apaga seu plano, cronograma, flashcards e simulados deste aparelho. Continuar?")) {
-              reset();
-              set({ profile: { name: "", quote: state.profile.quote } });
-            }
-          }}
+          onClick={() => setSheet("reset")}
         />
       </div>
 
       {editing && <EditProfile onClose={() => setEditing(false)} />}
       {sheet === "materias" && <SubjectsSheet onClose={() => setSheet(null)} />}
       {sheet === "config" && <ConfigSheet onClose={() => setSheet(null)} />}
+      {sheet === "reset" && (
+        <Sheet title="Apagar tudo?" onClose={() => setSheet(null)}>
+          <p className="sub">Isso apaga seu plano, cronograma, flashcards e simuladinhos. Não dá para desfazer.</p>
+          <button className="btn" style={{ background: "var(--bad)", color: "#fff" }} onClick={() => { reset(); setSheet(null); }}>
+            Apagar e recomeçar
+          </button>
+          <button className="btn secondary" onClick={() => setSheet(null)}>Cancelar</button>
+        </Sheet>
+      )}
     </div>
   );
 }
@@ -127,17 +131,27 @@ function ConfigSheet({ onClose }: { onClose: () => void }) {
         <div className="grow">
           <b style={{ fontWeight: 500 }}>Inteligência artificial</b>
           <p className="muted">
-            {ai == null ? "Verificando…" : ai ? "Conectada — planos, flashcards e simulados com IA." : "Desligada — usando o modo offline."}
+            {ai == null ? "Verificando…" : ai ? "Ligada: planos, flashcards e simuladinhos com IA." : "Desligada: usando o modo offline."}
           </p>
         </div>
       </div>
-      {ai === false && (
+      {ai === false && insideClaude() && (
+        <p className="notice">
+          Quando o app pedir permissão para usar o Claude, toque em permitir. Se você recusou, recarregue a página
+          para ver o pedido de novo.
+        </p>
+      )}
+      {ai === false && !insideClaude() && (
         <p className="notice">
           Para ligar a IA, crie um arquivo <code>.env</code> na pasta do projeto com <code>ANTHROPIC_API_KEY=sua-chave</code> e
           reinicie o servidor. Veja o README.
         </p>
       )}
-      <p className="muted">Seus dados ficam salvos só neste aparelho (no navegador).</p>
+      <p className="muted">
+        {insideClaude()
+          ? "Seus dados ficam salvos na sua conta do Claude, só para você, e aparecem em qualquer aparelho."
+          : "Seus dados ficam salvos só neste aparelho (no navegador)."}
+      </p>
     </Sheet>
   );
 }

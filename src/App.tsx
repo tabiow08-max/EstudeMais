@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string; icon: typeof HomeIcon }[] = [
 ];
 
 export function App() {
-  const { state } = useStore();
+  const { state, ready, syncError } = useStore();
   const [tab, setTab] = useState<Tab>("inicio");
   const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [studied, setStudied] = useState<{ seed?: StudiedSeed } | null>(null);
@@ -52,6 +52,18 @@ export function App() {
     openStats: () => setOverlay({ kind: "stats" }),
   };
 
+  // buscando os dados salvos na conta
+  if (!state.goal && !ready) {
+    return (
+      <div className="app">
+        <div className="screen full" style={{ justifyContent: "center", alignItems: "center" }}>
+          <div className="spinner" />
+          <p className="muted">Carregando seus estudos…</p>
+        </div>
+      </div>
+    );
+  }
+
   // primeiro acesso → onboarding
   if (!state.goal) return <PlanWizard onDone={() => setTab("inicio")} />;
 
@@ -60,6 +72,7 @@ export function App() {
   return (
     <>
       <div className="app">
+        {syncError && <div className="notice error" style={{ margin: "12px 20px 0" }}>{syncError}</div>}
         {tab === "inicio" && <Home nav={nav} />}
         {tab === "flashcards" && <Flashcards nav={nav} />}
         {tab === "cronograma" && <Schedule nav={nav} />}

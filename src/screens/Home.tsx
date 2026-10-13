@@ -108,7 +108,7 @@ export function Home({ nav }: { nav: Nav }) {
         <button className="card row" onClick={() => nav.openDeck()} style={{ textAlign: "left" }}>
           <span className="subject-icon" style={{ background: "var(--surface-2)" }}><Layers size={20} /></span>
           <div className="grow">
-            <b style={{ fontWeight: 500 }}>{dueCards} flashcards para revisar</b>
+            <b style={{ fontWeight: 500 }}>{dueCards} {dueCards === 1 ? "flashcard" : "flashcards"} para revisar</b>
             <p className="muted">A repetição espaçada escolheu os cards de hoje.</p>
           </div>
           <ChevronRight size={18} />
